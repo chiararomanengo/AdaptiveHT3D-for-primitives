@@ -1,4 +1,4 @@
-# AdaptiveHT3D for primitives
+# AdaptiveHT for primitives
 This repository contains a Matlab library for fitting simple geometric primitives on point clouds with a parameter-driven discretisation strategy that improves the accuracy and efficiency. As simple primitives we mean the classical surface primitives derived from constructive solid geometry, i.e., planes, spheres, cylinders, cones and tori. 
 
 The ```code``` directory contains our method based on the Hough Transform (see [1]). This method has been compared with state of the art algorithms, and the results can be found in [2].
