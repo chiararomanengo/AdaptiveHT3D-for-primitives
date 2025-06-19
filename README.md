@@ -1,0 +1,2 @@
+# AdaptiveHT3D for primitives
+This repository provides the software implementation of the methods described in the paper "Discretisation of the Hough parameter space for fitting and recognising geometric primitives in 3D point clouds". The work introduces a parameter-driven discretisation strategy that improves the accuracy and efficiency of Hough Transform-based recognition of 3D geometric primitives.
