@@ -9,8 +9,6 @@ Instead, the ```test``` directory contains 100 point clouds that can be used to 
 ## Basic Usage
 To use this method, you can simply run the ```main.m``` file in Matlab. The input is a .txt file containing the point cloud. The point cloud is then processed and the method find the best fitting primitive type and its geometric descriptors.  
 
-If the point cloud is noisy, you can run the ```mainNoise.m```. This is configured to deal with perturbed point clouds, i.e., thresholds are properly tuned w.r.t. the ```main.m``` file.
-
 # References
 
 [1] C. Romanengo, B. Falcidieno, S. Biasotti, "Discretisation of the Hough parameter space for fitting and recognising geometric primitives in 3D point clouds", Mathematics and Computers in Simulation, vol. 228, pp. 73-86 (2025), https://doi.org/10.1016/j.matcom.2024.08.033.
