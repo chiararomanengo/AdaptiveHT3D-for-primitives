@@ -1,4 +1,4 @@
-function [xb, yb, rb, max_H] = find_circle(XY, xc_min, xc_max, yc_min, yc_max, r_min, r_max)
+function [xb, yb, rb, max_H] = find_cone(XY, xc_min, xc_max, yc_min, yc_max, r_min, r_max)
 
 n=20;
 % Parameter space for centers and radius:
@@ -6,17 +6,16 @@ step_sizeX=(xc_max-xc_min)/n;
 xc = xc_min:step_sizeX:xc_max;
 step_sizeY=(yc_max-yc_min)/n;
 yc = yc_min:step_sizeY:yc_max;
+%step_size=(r_max-r_min)/n;
 step_size=sqrt(step_sizeY^2+step_sizeX^2);
 rc = r_min:step_size:r_max;
 H = zeros(length(xc), length(yc), length(rc));
-
-% size(H)
 
 % Optimal parameters
 for i=1:length(xc)
     for j=1:length(yc)
         for k=1:length(rc)
-            cur_sph = (XY(:,1) - xc(i)).^2+(XY(:,2) - yc(j)).^2 - rc(k)^2;
+            cur_sph = (XY(:,1) - xc(i)).^2+(XY(:,2) - yc(j)).^2 - (XY(:,3)-rc(k)).^2;
             H(i,j,k) = sum(abs(cur_sph)<step_size/2);
         end
     end
