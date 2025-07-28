@@ -2,7 +2,7 @@ clc; clear; close all;
 
 %% Selecting a point cloud
 
-t=4;
+t=5;
 
 nameFile = strcat('../test/pointCloud/pointCloud', int2str(t) , '.txt');
 

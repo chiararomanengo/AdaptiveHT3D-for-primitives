@@ -1,6 +1,5 @@
 function [output, mfe]=SearchSphere(X)
 
-try
 trX=mean(X(:,1));
 trY=mean(X(:,2));
 trZ=mean(X(:,3));
@@ -24,7 +23,7 @@ P=[];
 Pn=[];
 mfe=[];
 for t=1:size(PP,1)
-    cost=0.02;
+    cost=0.05;
     [ind,dist]=rangesearch(X,PP(t,:),cost*maxValue);
     ind=ind{1,1};
     while numel(ind)<10
@@ -42,8 +41,8 @@ for t=1:size(PP,1)
         theta=coord(j,2);
         phi=coord(j,3);
         if abs(cos(phi))>10^(-3)
-            x_piano = linspace(min(X(:,1)),max(X(:,1)),100);
-            y_piano=linspace(min(X(:,2)),max(X(:,2)),100);
+            x_piano = linspace(min(X(:,1)),max(X(:,1)),400);
+            y_piano=linspace(min(X(:,2)),max(X(:,2)),400);
             piano = zeros(length(x_piano)*length(y_piano),3);
             for i=1:length(x_piano)
                 for k=1:length(y_piano)
@@ -160,190 +159,195 @@ end
 C=[];
 soglia=0.005;
 radius1=[];
-for t=1:size(vVert,1)
-    rho=coeffV(t);
-    a=vVert(t,1);
-    b=vVert(t,2);
-    c=vVert(t,3);
-    
-    if norm([a b c])>10^(-6)
-        if abs(c)>10^(-3)
-            x_piano = linspace(min(X(:,1)),max(X(:,1)),400);
-            y_piano=linspace(min(X(:,2)),max(X(:,2)),400);
-            piano = zeros(length(x_piano)*length(y_piano),3);
-            for i=1:length(x_piano)
-                for k=1:length(y_piano)
-                    piano( (i-1)*length(x_piano)+k,1) = x_piano(i);
-                    piano( (i-1)*length(x_piano)+k,2) = y_piano(k);
-                    piano( (i-1)*length(x_piano)+k,3) = (-rho-x_piano(i)*a-y_piano(k)*b)/c;
-                end
-            end
-        else
-            if abs(a)>10^(-3)
+
+while size(C,1)<5
+    for t=1:size(vVert,1)
+        rho=coeffV(t);
+        a=vVert(t,1);
+        b=vVert(t,2);
+        c=vVert(t,3);
+        
+        if norm([a b c])>10^(-6)
+            if abs(c)>10^(-3)
+                x_piano = linspace(min(X(:,1)),max(X(:,1)),400);
                 y_piano=linspace(min(X(:,2)),max(X(:,2)),400);
-                z_piano=linspace(min(X(:,3)),max(X(:,3)),400);
-                piano = zeros(length(y_piano)*length(z_piano),3);
-                for i=1:length(y_piano)
-                    for k=1:length(z_piano)
-                        piano( (i-1)*length(y_piano)+k,1) = (-rho-y_piano(i)*b)/(a);
-                        piano( (i-1)*length(y_piano)+k,2) = y_piano(i);
-                        piano( (i-1)*length(y_piano)+k,3) = z_piano(k);
-                    end
-                end
-            else
-                x_piano=linspace(min(X(:,1)),max(X(:,1)),400);
-                z_piano=linspace(min(X(:,3)),max(X(:,3)),400);
-                piano = zeros(length(x_piano)*length(z_piano),3);
+                piano = zeros(length(x_piano)*length(y_piano),3);
                 for i=1:length(x_piano)
-                    for k=1:length(z_piano)
+                    for k=1:length(y_piano)
                         piano( (i-1)*length(x_piano)+k,1) = x_piano(i);
-                        piano( (i-1)*length(x_piano)+k,2) = (-rho)/(b);
-                        piano( (i-1)*length(x_piano)+k,3) = z_piano(k);
+                        piano( (i-1)*length(x_piano)+k,2) = y_piano(k);
+                        piano( (i-1)*length(x_piano)+k,3) = (-rho-x_piano(i)*a-y_piano(k)*b)/c;
                     end
                 end
-            end
-        end
-        
-        [I,dist] = knnsearch(piano,X);
-        cost=0.05;
-        ind=find(dist<=cost*maxValue);
-        while numel(ind)<15
-            cost=cost+0.01;
-            ind=find(dist<cost*maxValue);
-        end
-        XXX=X(ind,:);
-        
-        parN=round((size(XXX,1)/10)*3);
-        minPts=round((size(XXX,1)/10));
-        
-        [IDX2,DDD] = knnsearch(XXX,XXX,'k', parN);
-        epsilon = mean(DDD(:, parN));
-
-        IDX2=DBSCAN(XXX, epsilon, minPts);
-
-        numCl=max(IDX2);
-        
-        for i=1:numCl-1
-            ind1=find(IDX2==i);
-            for j=1:numCl
-                ind2=find(IDX2==j);
-                if numel(ind1)>numel(ind2)
-                    indMax=ind1;
+            else
+                if abs(a)>10^(-3)
+                    y_piano=linspace(min(X(:,2)),max(X(:,2)),400);
+                    z_piano=linspace(min(X(:,3)),max(X(:,3)),400);
+                    piano = zeros(length(y_piano)*length(z_piano),3);
+                    for i=1:length(y_piano)
+                        for k=1:length(z_piano)
+                            piano( (i-1)*length(y_piano)+k,1) = (-rho-y_piano(i)*b)/(a);
+                            piano( (i-1)*length(y_piano)+k,2) = y_piano(i);
+                            piano( (i-1)*length(y_piano)+k,3) = z_piano(k);
+                        end
+                    end
                 else
-                    indMax=ind2;
-                end
-            end
-        end
-        
-        if numCl==1
-            indMax=find(IDX2==1);
-        end
-        
-        xyz=XXX(indMax,:);
-        
-        vPlane=vVert(t,:)/norm(vVert(t,:));
-
-        [U,~,~] = pca(xyz);
-        n_bf = cross(U(:,1),U(:,2));
-
-        R = rot_mat([0;0;1],n_bf);
-        xyz = xyz*R;
-    
-        zAus=mean(xyz(:,3));
-        
-        xy=xyz(:,1:2);
-        try
-            mBB = minBoundingBox(xy');
-        catch
-            ind=[];
-            mfe=NaN;
-            output=[];
-        end
-        
-        if (norm(mBB(:,1)-mBB(:,2)) < norm(mBB(:,1)-mBB(:,4)) )
-            m = (mBB(2,4)-mBB(2,1))/(mBB(1,4)-mBB(1,1));
-            alpha = atan(m);
-        else
-            m = (mBB(2,2)-mBB(2,1))/(mBB(1,2)-mBB(1,1));
-            alpha = atan(m);
-        end
-        R1 = [cos(-alpha) sin(-alpha); -sin(-alpha) cos(-alpha)];
-        xy=xy*R1;
-        
-        Aus=xy(xy(:,1)==max(xy(:,1)),:);
-        Aus2=xy(xy(:,1)==min(xy(:,1)),:);
-        TrY1=(Aus(1,2)+Aus2(1,2))/2;
-        TrX1=(max(xy(:,1))+min(xy(:,1)))/2;
-        xy(:,1)=xy(:,1)-TrX1;
-        xy(:,2)=xy(:,2)-TrY1;
-        
-        if (abs(min(xy(:,2)))<=0.1*max(xy(:,2)) || abs(max(xy(:,2)))<=0.1*abs(min(xy(:,2)))) % caso mezzo toro
-            corda=max(xy(:,1))-min(xy(:,1));
-            f=(max(xy(:,2))-min(xy(:,2)));
-            r=(corda^2/(8*f))+f/2;
-            if abs(min(xy(:,2)))<=0.1*max(xy(:,2))
-                TrY11=r-max(xy(:,2));
-                xy(:,2)=xy(:,2)+TrY11;
-                TrY11=-TrY11;
-            else
-                TrY11=r-abs(min(xy(:,2)));
-                xy(:,2)=xy(:,2)-TrY11;
-            end
-            TrX11=0;
-            A=r;
-        else
-            if abs(max(xy(:,1))+min(xy(:,1)))/2<0.1*max(xy(:,1)) && abs(max(xy(:,2))+min(xy(:,2)))/2<0.1*max(xy(:,1)) % caso toro inter0
-                TrX11=(max(xy(:,1))+min(xy(:,1)))/2;
-                TrY11=(max(xy(:,2))+min(xy(:,2)))/2;
-                xy(:,2)=xy(:,2)-TrY11;
-                xy(:,1)=xy(:,1)-TrX11;
-                A=max(xy(:,1));
-            else
-                if (numel(find((xy(:,1).^2+xy(:,2).^2)<(max(xy(:,1))/10)^2))==0) 
-                    TrX11=0;
-                    TrY11=0;
-                    A=max(xy(:,1));
-                else 
-                    aus=xy(xy(:,2)==max(xy(:,2)),:);
-                    corda=max(xy(:,1))-min(xy(:,1));
-                    f=(max(xy(:,2))-min(xy(:,2)))/2;
-                    r=(corda^2/(8*f))+f/2;
-                    if abs(aus(1))<0.01
-                        TrY11=r+max(xy(:,2));
-                        xy(:,2)=xy(:,2)+TrY11;
-                        TrY11=-TrY11;
-                        TrX11=0;
-                        A=max(xy(:,2));
-                    else
-                        TrY11=r-abs(min(xy(:,2)));
-                        xy(:,2)=xy(:,2)-TrY11;
-                        TrX11=0;
-                        A=min(abs(xy(:,2)));
+                    x_piano=linspace(min(X(:,1)),max(X(:,1)),400);
+                    z_piano=linspace(min(X(:,3)),max(X(:,3)),400);
+                    piano = zeros(length(x_piano)*length(z_piano),3);
+                    for i=1:length(x_piano)
+                        for k=1:length(z_piano)
+                            piano( (i-1)*length(x_piano)+k,1) = x_piano(i);
+                            piano( (i-1)*length(x_piano)+k,2) = (-rho)/(b);
+                            piano( (i-1)*length(x_piano)+k,3) = z_piano(k);
+                        end
                     end
-                    AUS=0;
                 end
             end
-        end 
-        aus=max(max(xy(:,1)),max(xy(:,2)));
-        [xb, yb, rb] = find_circle(xy, -aus, aus, -aus, aus, 0.5*A,1.5*A);
-        xyz=[xy zeros(size(xy,1),1)];
-        a=rb;
-        theta=0:pi/200:2*pi;
-        circ=zeros(numel(theta),3);
-        circ(:,1)=xb+a*cos(theta);
-        circ(:,2)=yb+a*sin(theta);
-        [I,dist] = knnsearch(circ,xyz);
-        mAus=MFE(xyz,dist);
-        if mAus<soglia 
-            TrY=TrY1+TrY11+yb;
-            TrX=TrX1+TrX11+xb;
-            P=[TrX TrY zAus];
-            P(:,1:2)=P(:,1:2)*R1';
-            P=P*R';
-            C=[C; P];
-            radius1=[radius1; a];
+            
+            [I,dist] = knnsearch(piano,X);
+            cost=0.04;
+            ind=find(dist<=cost*maxValue);
+            while numel(ind)<15
+                cost=cost+0.02;
+                ind=find(dist<cost*maxValue);
+            end
+            XXX=X(ind,:);
+            
+            parN=round((size(XXX,1)/10)*3);
+            minPts=round((size(XXX,1)/10));
+            
+            [IDX2,DDD] = knnsearch(XXX,XXX,'k', parN);
+            epsilon = mean(DDD(:, parN));
+            
+            IDX2=DBSCAN(XXX, epsilon, minPts);
+            
+            numCl=max(IDX2);
+            
+            for i=1:numCl-1
+                ind1=find(IDX2==i);
+                for j=1:numCl
+                    ind2=find(IDX2==j);
+                    if numel(ind1)>numel(ind2)
+                        indMax=ind1;
+                    else
+                        indMax=ind2;
+                    end
+                end
+            end
+            
+            if numCl==1
+                indMax=find(IDX2==1);
+            end
+            
+            xyz=XXX(indMax,:);
+            
+            vPlane=vVert(t,:)/norm(vVert(t,:));
+            
+            [U,~,~] = pca(xyz);
+            n_bf = cross(U(:,1),U(:,2));
+            
+            R = rot_mat([0;0;1],n_bf);
+            xyz = xyz*R;
+            
+            zAus=mean(xyz(:,3));
+            
+            xy=xyz(:,1:2);
+            try
+                mBB = minBoundingBox(xy');
+            catch
+                ind=[];
+                mfe=NaN;
+                output=[];
+            end
+            
+            if (norm(mBB(:,1)-mBB(:,2)) < norm(mBB(:,1)-mBB(:,4)) )
+                m = (mBB(2,4)-mBB(2,1))/(mBB(1,4)-mBB(1,1));
+                alpha = atan(m);
+            else
+                m = (mBB(2,2)-mBB(2,1))/(mBB(1,2)-mBB(1,1));
+                alpha = atan(m);
+            end
+            R1 = [cos(-alpha) sin(-alpha); -sin(-alpha) cos(-alpha)];
+            xy=xy*R1;
+            
+            Aus=xy(xy(:,1)==max(xy(:,1)),:);
+            Aus2=xy(xy(:,1)==min(xy(:,1)),:);
+            TrY1=(Aus(1,2)+Aus2(1,2))/2;
+            TrX1=(max(xy(:,1))+min(xy(:,1)))/2;
+            xy(:,1)=xy(:,1)-TrX1;
+            xy(:,2)=xy(:,2)-TrY1;
+            
+            if (abs(min(xy(:,2)))<=0.5*max(xy(:,2)) || abs(max(xy(:,2)))<=0.5*abs(min(xy(:,2)))) 
+                corda=max(xy(:,1))-min(xy(:,1));
+                f=(max(xy(:,2))-min(xy(:,2)));
+                r=(corda^2/(8*f))+f/2;
+                if abs(min(xy(:,2)))<=0.5*max(xy(:,2))
+                    TrY11=r-max(xy(:,2));
+                    xy(:,2)=xy(:,2)+TrY11;
+                    TrY11=-TrY11;
+                else
+                    TrY11=r-abs(min(xy(:,2)));
+                    xy(:,2)=xy(:,2)-TrY11;
+                end
+                TrX11=0;
+                A=r;
+            else
+                if abs(max(xy(:,1))+min(xy(:,1)))/2<0.1*max(xy(:,1)) && abs(max(xy(:,2))+min(xy(:,2)))/2<0.1*max(xy(:,1)) % caso toro inter0
+                    TrX11=(max(xy(:,1))+min(xy(:,1)))/2;
+                    TrY11=(max(xy(:,2))+min(xy(:,2)))/2;
+                    xy(:,2)=xy(:,2)-TrY11;
+                    xy(:,1)=xy(:,1)-TrX11;
+                    A=max(xy(:,1));
+                else
+                    if (numel(find((xy(:,1).^2+xy(:,2).^2)<(max(xy(:,1))/10)^2))==0)
+                        TrX11=0;
+                        TrY11=0;           
+                        A=max(xy(:,1));
+                    else 
+                        aus=xy(xy(:,2)==max(xy(:,2)),:);
+                        corda=max(xy(:,1))-min(xy(:,1));
+                        f=(max(xy(:,2))-min(xy(:,2)))/2;
+                        r=(corda^2/(8*f))+f/2;
+                        if abs(aus(1))<0.01
+                            TrY11=r+max(xy(:,2));
+                            xy(:,2)=xy(:,2)+TrY11;
+                            TrY11=-TrY11;
+                            TrX11=0;
+                            A=max(xy(:,2));
+                        else
+                            TrY11=r-abs(min(xy(:,2)));
+                            xy(:,2)=xy(:,2)-TrY11;
+                            TrX11=0;
+                            A=min(abs(xy(:,2)));
+                        end
+                        AUS=0;
+                    end
+                end
+            end
+            aus=max(max(xy(:,1)),max(xy(:,2)));
+            [xb, yb, rb] = find_circle(xy, -aus, aus, -aus, aus, 0.5*A,1.5*A);
+            
+            xyz=[xy zeros(size(xy,1),1)];
+            a=rb;
+            theta=0:pi/200:2*pi;
+            circ=zeros(numel(theta),3);
+            circ(:,1)=xb+a*cos(theta);
+            circ(:,2)=yb+a*sin(theta); 
+            [I,dist] = knnsearch(circ,xyz);
+            mAus=MFE(xyz,dist);
+            if mAus<soglia
+                TrY=TrY1+TrY11+yb;
+                TrX=TrX1+TrX11+xb;
+                P=[TrX TrY zAus];
+                P(:,1:2)=P(:,1:2)*R1';
+                P=P*R';
+                C=[C; P];
+                radius1=[radius1; a];
+            end
         end
     end
+    soglia=soglia+0.005;
 end
 
 if size(C,1)>1
@@ -352,11 +356,10 @@ else
     V=C;
 end
 
+R=max(radius1);
 TrXFin=V(1);
 TrYFin=V(2);
 TrZFin=V(3);
-R=max(radius1);
-
 r1=mean(vecnorm(X'-V'));
 
 i=R-r1;
@@ -371,8 +374,8 @@ X(:,3)=X(:,3)-TrZFin;
 
 radius=find_sphere(R,X);
 
-t=0:pi/400:2*pi;
-theta=0:pi/400:pi;
+t=0:pi/500:2*pi;
+theta=0:pi/500:pi;
 curva=zeros(numel(theta),3);
 
 curva(:,1)=radius*cos(theta);
@@ -391,15 +394,8 @@ end
 [I,dist] = knnsearch(circ,X);
 
 mfe=MFE(X,dist);
-
 V=V+[trX trY trZ];
 a=radius(1);
 output=[a V];
-
-catch
-    mfe=NaN;
-    output=[];   
-    return
-end
 
 end

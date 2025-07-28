@@ -1,7 +1,5 @@
 function [output, mfe]=SearchCylinder(X)
 
-try
-    
 trX=mean(X(:,1));
 trY=mean(X(:,2));
 trZ=mean(X(:,3));
@@ -37,6 +35,7 @@ for t=1:size(PP,1)
     [coord, maxCoord]=PlanesHT0(XXX);
     
     for j=1:size(coord,1)
+        %     aus=1;
         rho=coord(j,1);
         theta=coord(j,2);
         phi=coord(j,3);
@@ -152,7 +151,6 @@ PAus=PFin;
 soglia=0.01;
 ind=find(mfeFin>0.01);
 vAus(ind,:)=[];
-PAus(ind,:)=[];
 bAus(ind)=[];
 
 k=0;
@@ -174,18 +172,20 @@ while numel(bAus)<3
 end
 
 ax=[];
+
 for j=1:size(vAus,1)-1
     v1=vAus(j,:);
     for k=j+1:size(vAus,1)
         v2=vAus(k,:);
         if norm(v1-v2)>10^(-2) && norm(v1+v2)>10^(-2)
             coeff=cross(v1,v2); 
+            coeff=coeff/norm(coeff);
             for s=1:3
                 if abs(coeff(s))<10^(-10)
                     coeff(s)=0;
                 end
             end
-            if coeff(1)<0
+           if coeff(1)<0
                 coeff=-coeff;
             else
                 if coeff(1)==0
@@ -204,6 +204,22 @@ for j=1:size(vAus,1)-1
         end
     end
 end
+
+v=ax;
+indices=zeros(size(v,1),1);
+for i=1:size(v,1)-1
+    v1=v(i,:);
+    for k=i+1:size(v,1)
+        v2=v(k,:);
+        if norm(v1-v2)<1*10^(-1)
+           indices(i)= indices(i)+1;
+           indices(k)= indices(k)+1;
+        end
+    end
+    
+end
+
+ax=ax(indices==max(indices),:);
 
 if size(ax,1)>1
     ax=mean(ax);
@@ -231,16 +247,16 @@ end
 M=mean(X);
 X= bsxfun(@minus, X, M);
 z=[0 0 1];
-if norm(z-n)>10^(-2) && norm(z+n)>10^(-2)
+if norm(z-n)>1*10^(-1) && norm(z+n)>1*10^(-1)
     R = rot_mat(z',n');
     xyz=X*R;
 else
     R = eye(3);
     xyz=X*R;
+    n=z;
 end
 
 xy=xyz(:,1:2);
-
 try
     mBB = minBoundingBox(xy');
 catch
@@ -267,12 +283,11 @@ TrX1=(max(xy(:,1))+min(xy(:,1)))/2;
 xy(:,1)=xy(:,1)-TrX1;
 xy(:,2)=xy(:,2)-TrY1;
 
-
-if (abs(min(xy(:,2)))<=0.1*max(xy(:,2)) || abs(max(xy(:,2)))<=0.1*abs(min(xy(:,2)))) 
+if (abs(min(xy(:,2)))<=0.8*max(xy(:,2)) || abs(max(xy(:,2)))<=0.8*abs(min(xy(:,2)))) 
     corda=max(xy(:,1))-min(xy(:,1));
     f=(max(xy(:,2))-min(xy(:,2)));
     r=(corda^2/(8*f))+f/2;
-    if abs(min(xy(:,2)))<=0.1*max(xy(:,2))
+    if abs(min(xy(:,2)))<=0.8*max(xy(:,2))
         TrY11=r-max(xy(:,2));
         xy(:,2)=xy(:,2)+TrY11;
         TrY11=-TrY11;
@@ -292,9 +307,9 @@ else
     else
         if (numel(find((xy(:,1).^2+xy(:,2).^2)<(max(xy(:,1))/10)^2))==0)
             TrX11=0;
-            TrY11=0;
+            TrY11=0;            
             A=max(xy(:,1));
-        else
+        else 
             aus=xy(xy(:,2)==max(xy(:,2)),:);
             corda=max(xy(:,1))-min(xy(:,1));
             f=(max(xy(:,2))-min(xy(:,2)))/2;
@@ -316,7 +331,7 @@ else
 end
 
 aus=max(max(xy(:,1)),max(xy(:,2)));
-[xb, yb, rb, max_H] = find_circle(xy, -aus/2, aus/2, -aus/2, aus/2, 0.8*A,1.2*A);
+[xb, yb, rb, max_H] = find_circle(xy, -aus, aus, -aus, aus, 0.5*A,1.5*A);
 
 mAus=1;
 xyzCirc=[xy zeros(size(xy,1),1)];
@@ -330,7 +345,7 @@ if max_H<2
             theta=0:pi/200:2*pi;
             circ=zeros(numel(theta),3);
             circ(:,1)=a1*cos(theta);
-            circ(:,2)=a1*sin(theta);
+            circ(:,2)=a1*sin(theta); 
             [I,dist] = knnsearch(circ,xyzCirc);
             m=MFE(xyzCirc,dist);
             if m<mAus
@@ -345,11 +360,10 @@ else
     a=rb;
 end
 
-
 xy(:,1)=xy(:,1)-xb;
 xy(:,2)=xy(:,2)-yb;
 xyz(:,1:2)=xy;
-[radius1, mfe1, max1]=cylinderZ(a,a,xyz);
+[radius1, mfe1]=cylinderZ(a,a,xyz);
 
 TrY=TrY1+TrY11+yb;
 TrX=TrX1+TrX11+xb;
@@ -364,13 +378,6 @@ P(3)=P(3)+trZ;
 a=radius1(1);
 output=[a n P];
 mfe=mfe1;
-
-catch
-    mfe=NaN;
-    output=[];   
-    return
-end
-
 
 end
 

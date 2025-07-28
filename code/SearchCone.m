@@ -1,7 +1,7 @@
 function [output, mfe] = SearchCone(X)
 
 try
-    
+
 trX=mean(X(:,1));
 trY=mean(X(:,2));
 trZ=mean(X(:,3));
@@ -36,7 +36,6 @@ for t=1:size(PP,1)
     [coord, maxCoord]=PlanesHT0(XXX);
     
     for j=1:size(coord,1)
-        %     aus=1;
         rho=coord(j,1);
         theta=coord(j,2);
         phi=coord(j,3);
@@ -155,8 +154,8 @@ if size(V,1)>1
    V=mean(V); 
 end
 
-ax=[];
 V=V';
+ax=[];
 for i=1:size(vAus,1)-1
     n=vAus(i,:);
     t=V'-PAus(i,:);
@@ -166,7 +165,7 @@ for i=1:size(vAus,1)-1
         t=V'-PAus(j,:);
         v2=cross(n,t);
         if norm(v1-v2)>10^(-2) && norm(v1+v2)>10^(-2)
-            coeff=cross(v1,v2); 
+            coeff=cross(v1,v2)/norm(cross(v1,v2)); 
             for s=1:3
                 if abs(coeff(s))<10^(-10)
                     coeff(s)=0;
@@ -198,7 +197,7 @@ for i=1:size(v,1)-1
     v1=v(i,:);
     for k=i+1:size(v,1)
         v2=v(k,:);
-        if norm(v1-v2)<5*10^(-1)
+        if norm(v1-v2)<1*10^(-2)
            indices(i)= indices(i)+1;
            indices(k)= indices(k)+1;
         end
@@ -214,7 +213,7 @@ end
 n=ax/norm(ax);
 
 for i=1:numel(n)
-   if abs(n(i)-1)<3*10^(-2) || abs(n(i)+1)<3*10^(-2)
+   if abs(n(i)-1)<2*10^(-2) || abs(n(i)+1)<2*10^(-2)
        n(i)=1; 
        if i==1
            n(2)=0;
@@ -236,13 +235,12 @@ TrVy=V(2);
 TrVz=V(3);
 
 xyz=X;
-
 xyz(:,1)=X(:,1)-TrVx;
 xyz(:,2)=X(:,2)-TrVy;
 xyz(:,3)=X(:,3)-TrVz;
 
 z=[0 0 1];
-if norm(z-n)>10^(-2) && norm(z+n)>10^(-2)
+if norm(z-n)>5*10^(-2) && norm(z+n)>5*10^(-2)
     R = rot_mat(z',n');
     xyz=xyz*R;
 else
@@ -262,8 +260,7 @@ else
 end
 
 theta=0:pi/50:2*pi;
-t=-1:1/(numel(theta)-1):1;
-
+t=-1:2/(numel(theta)-1):1;
 v=[0 0 1];
 u=[C/A 0 1];
 A=acos(sum(v.*u)/(norm(v)*norm(u)));
@@ -295,21 +292,19 @@ if numel(radius1)>1
         end
     end    
 else
-    alphaOpt=radius1;
+    alpha=radius1;
 end
 mfe=min([mAus mfe1]);
 
 V(1)=V(1)+trX;
 V(2)=V(2)+trY;
 V(3)=V(3)+trZ;
-
-output=[radius1(1) alphaOpt n V'];
+output=[radius1(1) alpha n V'];
 
 catch
     mfe=NaN;
     output=[];   
     return
 end
-
-
+    
 end
